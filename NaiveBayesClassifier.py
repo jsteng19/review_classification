@@ -5,18 +5,18 @@ import time
 
 def train(training, alpha):
 
-    file = open(training)
-    p_count, n_count = 0, 0
+    training_data = parse(training)
+    # p_count, n_count = 0, 0
     p_dict, n_dict = {}, {}
-    for line in file:
-        text, classification = line.rsplit(",")
-        words = set(text.split())
-        if classification == "0\n":
-            n_count += 1
-            d = n_dict
-        else:
-            p_count += 1
+    for review in training_data:
+
+        words = set(review[0])
+        if review[1]:
+            # p_count += 1
             d = p_dict
+        else:
+            # n_count += 1
+            d = n_dict
 
         for word in words:
             if word in d:
@@ -42,26 +42,25 @@ def train(training, alpha):
 
 
 def test(testing, p_positive, p_negative, vocabulary):
-    file = open(testing)
+
+    testing_data = parse(testing)
 
     labels = ""
     linecount, correctcount = 0, 0
-    for line in file:
-        text, classification = line.rsplit(",")
-        words = text.split()
+    for review in testing_data:
         positive, negative = 0, 0
-        for word in words:
+        for word in review[0]:
             if word in vocabulary:
                 positive += p_positive[word]
                 negative += p_negative[word]
 
         if negative > positive:
             labels += "0\n"
-            if classification == "0\n":
+            if review[1] == 0:
                 correctcount += 1
         else:
             labels += "1\n"
-            if classification == "1\n":
+            if review[1] == 1:
                 correctcount += 1
 
         linecount += 1
@@ -70,6 +69,18 @@ def test(testing, p_positive, p_negative, vocabulary):
     accuracy = correctcount / linecount
     return labels, accuracy
 
+
+def parse(filename):
+
+    parsed = []
+    file = open(filename)
+    for line in file:
+        text, classification = line.rsplit(",")
+        classification = False if classification == "0\n" else True
+        words = text.split()
+        parsed.append((words, classification))
+
+    return parsed
 
 
 def main():
@@ -88,14 +99,5 @@ def main():
     training_labels, training_accuracy = test(sys.argv[1], p_positive, p_negative, vocabulary)
     print(str(round(training_accuracy, 3)) + " (training)")
     print(str(round(testing_accuracy, 3)) + " (testing)")
-
-    #
-    # for alpha in range (1, 10):
-    #     print("alpha = " + str(1.5 + alpha / 10))
-    #     p_positive, p_negative, vocabulary = train(sys.argv[1], 1.5 + alpha / 10)
-    #     testing_labels, testing_accuracy = test(sys.argv[2], p_positive, p_negative, vocabulary)
-    #     print(testing_accuracy)
-
-
 
 main()
